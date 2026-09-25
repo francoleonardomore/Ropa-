@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AURA — High Fashion Experience</title>
     <style>
         * {
@@ -18,13 +18,12 @@
             background-color: #080808;
             color: #f0f0f0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            /* CRÍTICO PARA MÓVILES: Permite el scroll vertical normal */
-            touch-action: pan-y;
             overflow-x: hidden;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* Canvas Fijo para el Mundo 3D */
+        /* Canvas Fijo de Fondo */
         #webgl-canvas {
             position: fixed;
             top: 0;
@@ -32,16 +31,10 @@
             width: 100vw;
             height: 100vh;
             z-index: 1;
-            /* Permite desplazarse verticalmente sobre el canvas en móviles */
-            touch-action: pan-y;
-            cursor: grab;
+            pointer-events: none; /* Permite que todo gesto táctil pase al scroll */
         }
 
-        #webgl-canvas:active {
-            cursor: grabbing;
-        }
-
-        /* Interfaz de Audio y Navegación */
+        /* Cabecera */
         .header-ui {
             position: fixed;
             top: 1.5rem;
@@ -52,7 +45,7 @@
             align-items: center;
             z-index: 10;
             mix-blend-mode: difference;
-            pointer-events: none; /* No bloquea el toque del fondo */
+            pointer-events: auto;
         }
 
         .brand-logo {
@@ -60,11 +53,9 @@
             font-weight: 900;
             letter-spacing: 5px;
             text-transform: uppercase;
-            pointer-events: auto;
         }
 
         .audio-btn {
-            pointer-events: auto;
             background: rgba(0,0,0,0.4);
             border: 1px solid rgba(255, 255, 255, 0.5);
             color: #fff;
@@ -76,25 +67,19 @@
             text-transform: uppercase;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            transition: all 0.3s ease;
         }
 
-        .audio-btn:active {
-            background: #fff;
-            color: #000;
-        }
-
-        /* Secciones por Scroll */
+        /* Contenedor con Scroll Nativo Habilitado */
         .scroll-container {
             position: relative;
             z-index: 2;
             width: 100%;
-            pointer-events: none; /* Deja pasar gestos al canvas salvo botones */
+            pointer-events: auto;
         }
 
         section {
             min-height: 100vh;
-            min-height: 100dvh; /* Soporte para barras móviles dinámicas */
+            min-height: 100dvh;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -140,7 +125,6 @@
         }
 
         .cta-btn {
-            pointer-events: auto;
             display: inline-block;
             padding: 12px 28px;
             border: 1px solid #fff;
@@ -155,7 +139,6 @@
             border-radius: 4px;
         }
 
-        /* Indicador de Scroll */
         .scroll-indicator {
             position: fixed;
             bottom: 1.5rem;
@@ -180,7 +163,6 @@
             p { font-size: 0.88rem; }
         }
     </style>
-    <!-- Three.js para renderizado 3D -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -193,16 +175,14 @@
     <canvas id="webgl-canvas"></canvas>
 
     <div class="scroll-container">
-        <!-- Sección 1 -->
         <section id="sec-1" class="active">
             <div class="content-box">
                 <p class="tagline">Colección Otoño / Invierno</p>
                 <h2>Escultura en Movimiento</h2>
-                <p>Siluetas vanguardistas diseñadas para adaptarse a la anatomía urbana. Desliza hacia abajo para explorar la colección o arrastra para rotar la prenda.</p>
+                <p>Siluetas vanguardistas diseñadas para adaptarse a la anatomía urbana. Desliza hacia abajo para explorar la colección.</p>
             </div>
         </section>
 
-        <!-- Sección 2 -->
         <section id="sec-2">
             <div class="content-box">
                 <p class="tagline">Textilería Sostenible</p>
@@ -211,7 +191,6 @@
             </div>
         </section>
 
-        <!-- Sección 3 -->
         <section id="sec-3">
             <div class="content-box">
                 <p class="tagline">Edición Limitada</p>
@@ -225,7 +204,7 @@
     <div class="scroll-indicator">Desliza para explorar ↓</div>
 
     <script>
-        // --- 1. CONFIGURACIÓN DEL ESCENARIO 3D (THREE.JS) --- //
+        // --- 1. CONFIGURACIÓN DEL ESCENARIO 3D --- //
         const canvas = document.getElementById('webgl-canvas');
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x080808, 0.15);
@@ -237,7 +216,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        // Objeto Central (Prenda / Escultura 3D)
+        // Objeto 3D Central
         const geometry = new THREE.TorusKnotGeometry(0.75, 0.25, 100, 16);
         const material = new THREE.MeshStandardMaterial({
             color: 0x222222,
@@ -247,7 +226,7 @@
         const garmentMesh = new THREE.Mesh(geometry, material);
         scene.add(garmentMesh);
 
-        // Partículas de Fondo
+        // Partículas
         const particlesGeo = new THREE.BufferGeometry();
         const count = 250;
         const positions = new Float32Array(count * 3);
@@ -278,69 +257,19 @@
         rimLight.position.set(-3, -2, -1);
         scene.add(rimLight);
 
-        // --- 2. GESTIÓN DE INTERACCIÓN TÁCTIL Y MOUSE CORREGIDA --- //
-        let isDragging = false;
-        let previousPointerPosition = { x: 0, y: 0 };
-
-        function onPointerDown(x, y) {
-            isDragging = true;
-            previousPointerPosition = { x, y };
-        }
-
-        function onPointerMove(x, y) {
-            if (!isDragging) return;
-            const deltaX = x - previousPointerPosition.x;
-            const deltaY = y - previousPointerPosition.y;
-
-            garmentMesh.rotation.y += deltaX * 0.008;
-            garmentMesh.rotation.x += deltaY * 0.008;
-
-            previousPointerPosition = { x, y };
-        }
-
-        function onPointerUp() {
-            isDragging = false;
-        }
-
-        // Eventos Mouse
-        canvas.addEventListener('mousedown', (e) => onPointerDown(e.clientX, e.clientY));
-        window.addEventListener('mousemove', (e) => onPointerMove(e.clientX, e.clientY));
-        window.addEventListener('mouseup', onPointerUp);
-
-        // Eventos Táctiles (Optimizado para permitir scroll vertical)
-        let touchStartY = 0;
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                touchStartY = e.touches[0].clientY;
-                onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
-            }
-        }, { passive: true });
-
-        canvas.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1) {
-                const touchY = e.touches[0].clientY;
-                const diffY = Math.abs(touchY - touchStartY);
-                // Si el usuario mueve el dedo horizontalmente, se rota el objeto 3D
-                // Si mueve verticalmente, se permite el scroll normal del navegador
-                if (diffY < 20) {
-                    onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
-                }
-            }
-        }, { passive: true });
-
-        canvas.addEventListener('touchend', onPointerUp);
-
-        // --- 3. SCROLLTELLING --- //
-        let targetScrollY = 0;
+        // --- 2. CONTROL DE SCROLL NATIVO Y ANIMACIÓN --- //
         let currentScrollY = 0;
+        let targetScrollY = 0;
 
-        function handleScroll() {
+        function onScroll() {
             const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-            targetScrollY = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+            if (maxScroll > 0) {
+                targetScrollY = window.scrollY / maxScroll;
+            }
             updateActiveSections();
         }
 
-        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('scroll', onScroll, { passive: true });
 
         const sections = document.querySelectorAll('section');
         function updateActiveSections() {
@@ -356,7 +285,7 @@
             });
         }
 
-        // --- 4. AUDIO ATMOSFÉRICO (Web Audio API) --- //
+        // --- 3. AUDIO ATMOSFÉRICO --- //
         let audioCtx, oscillator, gainNode;
         let isAudioPlaying = false;
         const audioBtn = document.getElementById('audioToggle');
@@ -391,7 +320,7 @@
             }
         });
 
-        // --- 5. BUCLE DE ANIMACIÓN --- //
+        // --- 4. BUCLE DE RENDERIZADO --- //
         const clock = new THREE.Clock();
 
         function animate() {
@@ -399,10 +328,8 @@
 
             currentScrollY += (targetScrollY - currentScrollY) * 0.08;
 
-            if (!isDragging) {
-                garmentMesh.rotation.y = currentScrollY * Math.PI * 2 + (clock.getElapsedTime() * 0.1);
-                garmentMesh.rotation.z = Math.sin(currentScrollY * Math.PI) * 0.3;
-            }
+            garmentMesh.rotation.y = currentScrollY * Math.PI * 2 + (clock.getElapsedTime() * 0.1);
+            garmentMesh.rotation.z = Math.sin(currentScrollY * Math.PI) * 0.3;
 
             camera.position.z = 4 - (currentScrollY * 1.2);
             camera.position.x = Math.sin(currentScrollY * Math.PI) * 0.8;
@@ -418,7 +345,6 @@
 
         animate();
 
-        // Responsive
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
