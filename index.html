@@ -2,23 +2,26 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AURA — High Fashion Experience</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        body, html {
+        html, body {
             width: 100%;
             height: 100%;
             background-color: #080808;
             color: #f0f0f0;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            /* CRÍTICO PARA MÓVILES: Permite el scroll vertical normal */
+            touch-action: pan-y;
             overflow-x: hidden;
-            scroll-behavior: smooth;
+            overflow-y: auto;
         }
 
         /* Canvas Fijo para el Mundo 3D */
@@ -29,7 +32,8 @@
             width: 100vw;
             height: 100vh;
             z-index: 1;
-            pointer-events: auto; /* Permite arrastrar el objeto 3D */
+            /* Permite desplazarse verticalmente sobre el canvas en móviles */
+            touch-action: pan-y;
             cursor: grab;
         }
 
@@ -40,37 +44,42 @@
         /* Interfaz de Audio y Navegación */
         .header-ui {
             position: fixed;
-            top: 2rem;
-            left: 2rem;
-            right: 2rem;
+            top: 1.5rem;
+            left: 1.5rem;
+            right: 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 10;
             mix-blend-mode: difference;
+            pointer-events: none; /* No bloquea el toque del fondo */
         }
 
         .brand-logo {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 900;
-            letter-spacing: 6px;
+            letter-spacing: 5px;
             text-transform: uppercase;
+            pointer-events: auto;
         }
 
         .audio-btn {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            pointer-events: auto;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             color: #fff;
-            padding: 8px 18px;
+            padding: 8px 16px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             letter-spacing: 2px;
             cursor: pointer;
             text-transform: uppercase;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             transition: all 0.3s ease;
         }
 
-        .audio-btn:hover {
+        .audio-btn:active {
             background: #fff;
             color: #000;
         }
@@ -79,17 +88,19 @@
         .scroll-container {
             position: relative;
             z-index: 2;
-            pointer-events: none; /* Deja pasar clicks al Canvas salvo botones */
+            width: 100%;
+            pointer-events: none; /* Deja pasar gestos al canvas salvo botones */
         }
 
         section {
-            height: 100vh;
+            min-height: 100vh;
+            min-height: 100dvh; /* Soporte para barras móviles dinámicas */
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 0 10vw;
+            padding: 0 8vw;
             opacity: 0.2;
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
             transform: translateY(20px);
         }
 
@@ -99,72 +110,74 @@
         }
 
         .content-box {
-            max-width: 500px;
+            max-width: 480px;
         }
 
         .tagline {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             color: #888;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
         }
 
         h2 {
-            font-size: 3.5rem;
+            font-size: 2.5rem;
             font-weight: 300;
             letter-spacing: -1px;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
+            line-height: 1.15;
+            margin-bottom: 1rem;
             background: linear-gradient(180deg, #ffffff 0%, #aaaaaa 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         p {
-            font-size: 1rem;
+            font-size: 0.95rem;
             line-height: 1.6;
             color: #bbb;
-            margin-bottom: 2rem;
+            margin-bottom: 1.8rem;
         }
 
         .cta-btn {
             pointer-events: auto;
             display: inline-block;
-            padding: 14px 36px;
+            padding: 12px 28px;
             border: 1px solid #fff;
             color: #fff;
             text-decoration: none;
-            font-size: 0.8rem;
-            letter-spacing: 3px;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            transition: all 0.3s ease;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .cta-btn:hover {
-            background: #fff;
-            color: #000;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 4px;
         }
 
         /* Indicador de Scroll */
         .scroll-indicator {
             position: fixed;
-            bottom: 2rem;
+            bottom: 1.5rem;
             left: 50%;
             transform: translateX(-50%);
             z-index: 10;
-            font-size: 0.75rem;
-            letter-spacing: 3px;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
             0%, 100% { opacity: 0.3; }
             50% { opacity: 0.8; }
+        }
+
+        @media (max-width: 768px) {
+            h2 { font-size: 2rem; }
+            p { font-size: 0.88rem; }
         }
     </style>
     <!-- Three.js para renderizado 3D -->
@@ -185,7 +198,7 @@
             <div class="content-box">
                 <p class="tagline">Colección Otoño / Invierno</p>
                 <h2>Escultura en Movimiento</h2>
-                <p>Siluetas vanguardistas diseñadas para adaptarse a la anatomía urbana. Haz clic y arrastra para examinar la textura 3D.</p>
+                <p>Siluetas vanguardistas diseñadas para adaptarse a la anatomía urbana. Desliza hacia abajo para explorar la colección o arrastra para rotar la prenda.</p>
             </div>
         </section>
 
@@ -204,12 +217,12 @@
                 <p class="tagline">Edición Limitada</p>
                 <h2>Pieza 01: La Capa Atmosférica</h2>
                 <p>Solo 100 unidades producidas artesanalmente. Explora cada ángulo en el visor tridimensional antes de ordenar.</p>
-                <a href="#buy" class="cta-btn">Reservar Ahora</a>
+                <a href="#buy" class="cta-btn" onclick="alert('Reservado con éxito')">Reservar Ahora</a>
             </div>
         </section>
     </div>
 
-    <div class="scroll-indicator">Haz Scroll para explorar ↓</div>
+    <div class="scroll-indicator">Desliza para explorar ↓</div>
 
     <script>
         // --- 1. CONFIGURACIÓN DEL ESCENARIO 3D (THREE.JS) --- //
@@ -225,21 +238,18 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
         // Objeto Central (Prenda / Escultura 3D)
-        const geometry = new THREE.TorusKnotGeometry(0.8, 0.28, 120, 32);
-        
-        // Material con acabado elegante y suave
+        const geometry = new THREE.TorusKnotGeometry(0.75, 0.25, 100, 16);
         const material = new THREE.MeshStandardMaterial({
             color: 0x222222,
-            roughness: 0.3,
-            metalness: 0.8,
-            flatShading: false
+            roughness: 0.35,
+            metalness: 0.75
         });
         const garmentMesh = new THREE.Mesh(geometry, material);
         scene.add(garmentMesh);
 
-        // Sistema de Partículas Atmosféricas (Polvo de tela / Niebla)
+        // Partículas de Fondo
         const particlesGeo = new THREE.BufferGeometry();
-        const count = 400;
+        const count = 250;
         const positions = new Float32Array(count * 3);
 
         for(let i = 0; i < count * 3; i++) {
@@ -256,43 +266,81 @@
         const particles = new THREE.Points(particlesGeo, particlesMat);
         scene.add(particles);
 
-        // Iluminación
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+        // Luces
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
         scene.add(ambientLight);
 
         const mainLight = new THREE.DirectionalLight(0xffffff, 1.5);
         mainLight.position.set(5, 5, 5);
         scene.add(mainLight);
 
-        const rimLight = new THREE.PointLight(0xff4500, 2, 10); // Luz cálida de acento
+        const rimLight = new THREE.PointLight(0xff4500, 2, 10);
         rimLight.position.set(-3, -2, -1);
         scene.add(rimLight);
 
-        // --- 2. INTERACCIÓN 3D (ARRASTRAR CON MOUSE/TOUCH) --- //
+        // --- 2. GESTIÓN DE INTERACCIÓN TÁCTIL Y MOUSE CORREGIDA --- //
         let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
+        let previousPointerPosition = { x: 0, y: 0 };
 
-        canvas.addEventListener('mousedown', (e) => { isDragging = true; });
-        canvas.addEventListener('mouseup', () => { isDragging = false; });
-        canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const deltaX = e.clientX - previousMousePosition.x;
-                const deltaY = e.clientY - previousMousePosition.y;
+        function onPointerDown(x, y) {
+            isDragging = true;
+            previousPointerPosition = { x, y };
+        }
 
-                garmentMesh.rotation.y += deltaX * 0.01;
-                garmentMesh.rotation.x += deltaY * 0.01;
+        function onPointerMove(x, y) {
+            if (!isDragging) return;
+            const deltaX = x - previousPointerPosition.x;
+            const deltaY = y - previousPointerPosition.y;
+
+            garmentMesh.rotation.y += deltaX * 0.008;
+            garmentMesh.rotation.x += deltaY * 0.008;
+
+            previousPointerPosition = { x, y };
+        }
+
+        function onPointerUp() {
+            isDragging = false;
+        }
+
+        // Eventos Mouse
+        canvas.addEventListener('mousedown', (e) => onPointerDown(e.clientX, e.clientY));
+        window.addEventListener('mousemove', (e) => onPointerMove(e.clientX, e.clientY));
+        window.addEventListener('mouseup', onPointerUp);
+
+        // Eventos Táctiles (Optimizado para permitir scroll vertical)
+        let touchStartY = 0;
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                touchStartY = e.touches[0].clientY;
+                onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
             }
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-        });
+        }, { passive: true });
 
-        // --- 3. SCROLLTELLING Y CAMBIOS DE CÁMARA --- //
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                const touchY = e.touches[0].clientY;
+                const diffY = Math.abs(touchY - touchStartY);
+                // Si el usuario mueve el dedo horizontalmente, se rota el objeto 3D
+                // Si mueve verticalmente, se permite el scroll normal del navegador
+                if (diffY < 20) {
+                    onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', onPointerUp);
+
+        // --- 3. SCROLLTELLING --- //
         let targetScrollY = 0;
         let currentScrollY = 0;
 
-        window.addEventListener('scroll', () => {
-            targetScrollY = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+        function handleScroll() {
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            targetScrollY = maxScroll > 0 ? window.scrollY / maxScroll : 0;
             updateActiveSections();
-        });
+        }
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
 
         const sections = document.querySelectorAll('section');
         function updateActiveSections() {
@@ -308,7 +356,7 @@
             });
         }
 
-        // --- 4. AUDIO ATMOSFÉRICO SINTETIZADO (Web Audio API) --- //
+        // --- 4. AUDIO ATMOSFÉRICO (Web Audio API) --- //
         let audioCtx, oscillator, gainNode;
         let isAudioPlaying = false;
         const audioBtn = document.getElementById('audioToggle');
@@ -318,11 +366,10 @@
             oscillator = audioCtx.createOscillator();
             gainNode = audioCtx.createGain();
 
-            // Tono grave, ambiental y envolvente
             oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(55, audioCtx.currentTime); // Nota A1
+            oscillator.frequency.setValueAtTime(55, audioCtx.currentTime);
 
-            gainNode.gain.setValueAtTime(0.01, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
             
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
@@ -333,42 +380,37 @@
             if (!audioCtx) initAudio();
 
             if (isAudioPlaying) {
-                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
                 audioBtn.innerText = "Ambiente: OFF";
                 isAudioPlaying = false;
             } else {
                 audioCtx.resume();
-                gainNode.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 1);
+                gainNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.8);
                 audioBtn.innerText = "Ambiente: ON";
                 isAudioPlaying = true;
             }
         });
 
-        // --- 5. BUCLE DE ANIMACIÓN (RENDER LOOP) --- //
+        // --- 5. BUCLE DE ANIMACIÓN --- //
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
 
-            // Interpolación suave del Scroll
-            currentScrollY += (targetScrollY - currentScrollY) * 0.05;
+            currentScrollY += (targetScrollY - currentScrollY) * 0.08;
 
-            // Transiciones del objeto 3D según el scroll
             if (!isDragging) {
                 garmentMesh.rotation.y = currentScrollY * Math.PI * 2 + (clock.getElapsedTime() * 0.1);
-                garmentMesh.rotation.z = Math.sin(currentScrollY * Math.PI) * 0.5;
+                garmentMesh.rotation.z = Math.sin(currentScrollY * Math.PI) * 0.3;
             }
 
-            // Movimiento dinámico de cámara
-            camera.position.z = 4 - (currentScrollY * 1.5);
-            camera.position.x = Math.sin(currentScrollY * Math.PI) * 1.2;
+            camera.position.z = 4 - (currentScrollY * 1.2);
+            camera.position.x = Math.sin(currentScrollY * Math.PI) * 0.8;
 
-            // Rotación sutil de partículas
             particles.rotation.y = clock.getElapsedTime() * 0.02;
 
-            // Modulación del audio según el scroll (si está activo)
             if (isAudioPlaying && audioCtx) {
-                oscillator.frequency.setValueAtTime(55 + (currentScrollY * 30), audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(55 + (currentScrollY * 25), audioCtx.currentTime);
             }
 
             renderer.render(scene, camera);
@@ -376,7 +418,7 @@
 
         animate();
 
-        // Ajuste en cambio de tamaño de ventana
+        // Responsive
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
